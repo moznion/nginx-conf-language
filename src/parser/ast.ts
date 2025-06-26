@@ -76,11 +76,20 @@ export interface VariableAssignmentNode extends BaseNode {
 }
 
 /**
- * Inline directive node (e.g., @inline $var)
+ * Inline directive node (e.g., %inline %var)
  */
 export interface InlineDirectiveNode extends BaseNode {
   type: 'inline';
   variableName: string;
+}
+
+/**
+ * Environment variable node (e.g., %env("PORT"))
+ */
+export interface EnvironmentVariableNode extends BaseNode {
+  type: 'env_var';
+  variableName: string;
+  defaultValue?: string;
 }
 
 /**
@@ -92,4 +101,5 @@ export type ASTNode =
   | BlockNode
   | LocationNode
   | VariableAssignmentNode
-  | InlineDirectiveNode;
+  | InlineDirectiveNode
+  | EnvironmentVariableNode;

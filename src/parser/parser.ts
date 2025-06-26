@@ -12,6 +12,7 @@ import {
   LocationModifier,
   VariableAssignmentNode,
   InlineDirectiveNode,
+  EnvironmentVariableNode,
   Position
 } from './ast';
 
@@ -62,6 +63,11 @@ export class Parser {
       return this.parseInlineDirective();
     }
 
+    // %env() directive
+    if (this.check(TokenType.EnvVar)) {
+      return this.parseEnvironmentVariable();
+    }
+
     // Location block
     if (this.check(TokenType.Location)) {
       return this.parseLocation();
@@ -76,11 +82,8 @@ export class Parser {
         return this.parseIfBlock();
       }
       
-      const nextToken = this.peekNext();
-
-      // Check if it's a block (has opening brace)
-      if (nextToken && (nextToken.type === TokenType.LeftBrace || 
-          (this.peekAhead(2) && this.peekAhead(2)!.type === TokenType.LeftBrace))) {
+      // Check if it's a block by looking ahead for opening brace
+      if (this.hasLeftBraceAhead()) {
         return this.parseBlock();
       }
 
@@ -151,11 +154,17 @@ export class Parser {
 
       // Parse path list
       while (!this.check(TokenType.RightBracket) && !this.isAtEnd()) {
-        if (!this.check(TokenType.String)) {
-          throw this.error('Expected string in location path list');
+        if (!this.check(TokenType.String) && !this.check(TokenType.EnvVar)) {
+          throw this.error('Expected string or environment variable in location path list');
         }
         
-        paths.push(this.advance().value);
+        if (this.check(TokenType.EnvVar)) {
+          const envNode = this.parseEnvironmentVariable();
+          const envValue = this.resolveEnvironmentVariable(envNode);
+          paths.push(envValue);
+        } else {
+          paths.push(this.advance().value);
+        }
 
         if (this.check(TokenType.Comma)) {
           this.advance();
@@ -179,11 +188,18 @@ export class Parser {
       }
 
       // Parse single path
-      if (!this.check(TokenType.Identifier) && !this.check(TokenType.String)) {
+      if (!this.check(TokenType.Identifier) && !this.check(TokenType.String) && !this.check(TokenType.EnvVar)) {
         throw this.error('Expected path after location');
       }
       
-      paths.push(this.advance().value);
+      if (this.check(TokenType.EnvVar)) {
+        // Parse environment variable and resolve it
+        const envNode = this.parseEnvironmentVariable();
+        const envValue = this.resolveEnvironmentVariable(envNode);
+        paths.push(envValue);
+      } else {
+        paths.push(this.advance().value);
+      }
     }
 
     // Parse block body
@@ -221,6 +237,11 @@ export class Parser {
     while (!this.check(TokenType.LeftBrace) && !this.isAtEnd()) {
       if (this.check(TokenType.Identifier) || this.check(TokenType.String) || this.check(TokenType.Number) || this.check(TokenType.Variable)) {
         args.push(this.advance().value);
+      } else if (this.check(TokenType.EnvVar)) {
+        // Parse environment variable and resolve it
+        const envNode = this.parseEnvironmentVariable();
+        const envValue = this.resolveEnvironmentVariable(envNode);
+        args.push(envValue);
       } else {
         break;
       }
@@ -328,6 +349,11 @@ export class Parser {
       
       if (this.check(TokenType.Identifier) || this.check(TokenType.String) || this.check(TokenType.Number) || this.check(TokenType.Variable)) {
         args.push(this.advance().value);
+      } else if (this.check(TokenType.EnvVar)) {
+        // Parse environment variable and resolve it
+        const envNode = this.parseEnvironmentVariable();
+        const envValue = this.resolveEnvironmentVariable(envNode);
+        args.push(envValue);
       } else if (this.check(TokenType.Equals)) {
         // Handle special syntax like =404
         const equalsToken = this.advance();
@@ -392,12 +418,6 @@ export class Parser {
     return null;
   }
 
-  private peekAhead(n: number): Token | null {
-    if (this.current + n < this.tokens.length) {
-      return this.tokens[this.current + n];
-    }
-    return null;
-  }
 
   private previous(): Token {
     return this.tokens[this.current - 1];
@@ -406,6 +426,75 @@ export class Parser {
   private getCurrentPosition(): Position {
     const token = this.peek();
     return { line: token.line, column: token.column };
+  }
+
+  private parseEnvironmentVariable(): EnvironmentVariableNode {
+    const startPos = this.getCurrentPosition();
+    
+    // Consume %env
+    this.advance();
+    
+    // Consume (
+    if (!this.consume(TokenType.LeftParen, 'Expected ( after %env')) {
+      throw this.error('Expected ( after %env');
+    }
+    
+    // Read the environment variable name (should be a string)
+    if (!this.check(TokenType.String)) {
+      throw this.error('Expected string literal for environment variable name');
+    }
+    
+    const variableName = this.advance().value;
+    
+    // Optional default value
+    let defaultValue: string | undefined;
+    if (this.check(TokenType.Comma)) {
+      this.advance(); // consume comma
+      if (!this.check(TokenType.String)) {
+        throw this.error('Expected string literal for default value');
+      }
+      defaultValue = this.advance().value;
+    }
+    
+    // Consume )
+    if (!this.consume(TokenType.RightParen, 'Expected ) after environment variable')) {
+      throw this.error('Expected ) after environment variable');
+    }
+    
+    return {
+      type: 'env_var',
+      variableName,
+      defaultValue,
+      position: startPos
+    };
+  }
+
+  private resolveEnvironmentVariable(node: EnvironmentVariableNode): string {
+    const envValue = process.env[node.variableName];
+    
+    if (envValue !== undefined) {
+      return envValue;
+    } else if (node.defaultValue !== undefined) {
+      return node.defaultValue;
+    } else {
+      throw this.error(`Environment variable ${node.variableName} is not set and no default value provided`);
+    }
+  }
+
+  private hasLeftBraceAhead(): boolean {
+    // Look ahead to find if there's a left brace before semicolon or EOF
+    let i = 1;
+    while (this.current + i < this.tokens.length) {
+      const token = this.tokens[this.current + i];
+      if (token.type === TokenType.LeftBrace) {
+        return true;
+      }
+      if (token.type === TokenType.Semicolon || token.type === TokenType.EOF) {
+        return false;
+      }
+      i++;
+    }
+    return false;
   }
 
   private error(message: string): Error {

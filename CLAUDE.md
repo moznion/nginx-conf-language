@@ -9,7 +9,8 @@ A DSL (Domain-Specific Language) for generating nginx.conf files, written in Typ
 3. **Enhanced features beyond nginx.conf**:
    - Multiple location directives using list literals
    - Code block definitions and reuse
-   - Inline expansion using @inline directive
+   - Inline expansion using %inline directive
+   - Environment variable support with %env() syntax
 
 ## Architecture
 - **Parser**: Parses NCL files into AST
@@ -98,8 +99,12 @@ tests/          # Test files
    - All 9 integration tests passing
 
 ## Final Statistics
-- Total tests: 68 (57 regular + 5 legacy nginx + 6 Docker nginx validation tests)
-- Lines of code: ~2,000
+- Total tests: 84 (79 passing + 5 legacy nginx skipped)
+  - Unit tests: 58 (tokenizer, parser, generator, AST)
+  - Environment variable tests: 11
+  - Integration tests: 14 (includes 6 new environment variable scenarios)
+  - Docker nginx validation tests: 6
+- Lines of code: ~2,500
 - Development time: TDD approach with Red-Green-Refactor cycle
 - Test coverage: Comprehensive unit, integration, and nginx validation tests
 
@@ -126,9 +131,21 @@ Both test suites ensure generated configs are syntactically correct for real ngi
 1. **location in [list]**: Expands to multiple location blocks
 2. **%variable = { block }**: Defines reusable code blocks
 3. **%inline %variable**: Expands code block inline
+4. **%env("VAR_NAME")**: Resolves environment variable at generation time
+5. **%env("VAR_NAME", "default")**: Resolves environment variable with default value
 
 ## Recent Changes
-### 2025-06-26 - Syntax Unification
+### 2025-06-26 - Environment Variable Support
+- Added `%env("VAR_NAME")` syntax for environment variable resolution
+- Support for default values with `%env("VAR_NAME", "default")`
+- Environment variables work in directive arguments, block arguments, and location paths
+- Integration with existing %inline variable expansion
+- Comprehensive test suite with 11 environment variable tests
+- Updated integration tests with 6 additional environment variable scenarios
+- Updated README.md and examples to showcase environment variable features
+- All 84 tests passing (79 + 5 legacy nginx skipped)
+
+### 2025-06-26 - Syntax Unification  
 - Changed variable literal prefix from `$` to `%`
 - Changed inline directive from `@inline` to `%inline`
 - All NCL special syntax now uses `%` prefix for consistency

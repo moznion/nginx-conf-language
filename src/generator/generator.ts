@@ -10,7 +10,8 @@ import {
   LocationNode,
   LocationModifier,
   VariableAssignmentNode,
-  InlineDirectiveNode
+  InlineDirectiveNode,
+  EnvironmentVariableNode
 } from '../parser/ast';
 
 export interface GeneratorOptions {
@@ -64,6 +65,8 @@ export class Generator {
         return '';
       case 'inline':
         return this.generateInline(node as InlineDirectiveNode);
+      case 'env_var':
+        return this.generateEnvironmentVariable(node as EnvironmentVariableNode);
       default:
         throw new Error(`Unknown node type: ${(node as any).type}`);
     }
@@ -193,6 +196,19 @@ export class Generator {
     }
     
     return lines.join('\n');
+  }
+
+  private generateEnvironmentVariable(node: EnvironmentVariableNode): string {
+    // Resolve environment variable at generation time
+    const envValue = process.env[node.variableName];
+    
+    if (envValue !== undefined) {
+      return envValue;
+    } else if (node.defaultValue !== undefined) {
+      return node.defaultValue;
+    } else {
+      throw new Error(`Environment variable ${node.variableName} is not set and no default value provided`);
+    }
   }
 
   private getIndent(): string {

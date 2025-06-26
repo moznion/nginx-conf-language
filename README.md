@@ -6,7 +6,27 @@ A Domain-Specific Language (DSL) for generating nginx.conf files with enhanced f
 
 nginx-configuration-language (NCL) provides nginx.conf-compatible syntax with additional features:
 
-### 1. Multiple Location Paths
+### 1. Environment Variables
+Dynamically inject environment variables into your configuration:
+
+```ncl
+server {
+  listen %env("PORT", "80");
+  server_name %env("SERVER_NAME", "localhost");
+  
+  location / {
+    root %env("DOCUMENT_ROOT", "/var/www/html");
+    proxy_pass %env("BACKEND_URL");
+  }
+}
+```
+
+Environment variables are resolved at generation time:
+```bash
+PORT=3000 SERVER_NAME=example.com BACKEND_URL=http://api.internal ncl-gen config.ncl
+```
+
+### 2. Multiple Location Paths
 Define multiple location blocks with a single statement using `location in`:
 
 ```ncl
@@ -28,7 +48,7 @@ location /v2 {
 }
 ```
 
-### 2. Code Block Variables
+### 3. Code Block Variables
 Define reusable code blocks with variables:
 
 ```ncl
@@ -38,7 +58,7 @@ Define reusable code blocks with variables:
 };
 ```
 
-### 3. Inline Expansion
+### 4. Inline Expansion
 Use `%inline` to expand code blocks:
 
 ```ncl
@@ -80,14 +100,15 @@ ncl-gen sample.ncl --no-inline
 import { parse, generate } from 'nginx-conf-language';
 
 const nclContent = `
-  $cache_headers = {
+  %cache_headers = {
     expires 1h;
     add_header Cache-Control "public";
   };
 
   server {
-    listen 80;
-    @inline $cache_headers
+    listen %env("PORT", "80");
+    server_name %env("DOMAIN", "localhost");
+    %inline %cache_headers
   }
 `;
 
@@ -106,17 +127,17 @@ Input file (`example.ncl`):
   add_header X-XSS-Protection "1; mode=block";
 };
 
-worker_processes auto;
+worker_processes %env("WORKER_PROCESSES", "auto");
 
 http {
   server {
-    listen 80;
-    server_name example.com;
+    listen %env("PORT", "80");
+    server_name %env("SERVER_NAME", "example.com");
 
     %inline %security_headers
 
     location in ["/api", "/graphql"] {
-      proxy_pass http://backend;
+      proxy_pass %env("BACKEND_URL", "http://backend");
       proxy_set_header Host $host;
     }
 
@@ -127,7 +148,37 @@ http {
 }
 ```
 
-Output file (`example.conf`):
+Output file (`example.conf`) with environment variables:
+```bash
+# With environment variables set
+PORT=8080 SERVER_NAME=myapp.com BACKEND_URL=http://api.internal ncl-gen example.ncl
+```
+
+```nginx
+worker_processes auto;
+http {
+  server {
+    listen 8080;
+    server_name myapp.com;
+    add_header X-Frame-Options SAMEORIGIN;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-XSS-Protection "1; mode=block";
+    location /api {
+      proxy_pass http://api.internal;
+      proxy_set_header Host $host;
+    }
+    location /graphql {
+      proxy_pass http://api.internal;
+      proxy_set_header Host $host;
+    }
+    location ~ \.php$ {
+      fastcgi_pass unix:/var/run/php-fpm.sock;
+    }
+  }
+}
+```
+
+Or with default values (no environment variables set):
 ```nginx
 worker_processes auto;
 http {

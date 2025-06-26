@@ -5,35 +5,35 @@
 };
 
 %cache_headers = {
-  expires "1h";
-  add_header Cache-Control "public, max-age=3600";
+  expires %env("CACHE_DURATION", "1h");
+  add_header Cache-Control %env("CACHE_CONTROL", "public, max-age=3600");
 };
 
-worker_processes auto;
+worker_processes %env("WORKER_PROCESSES", "auto");
 
 http {
   sendfile on;
   tcp_nopush on;
 
   server {
-    listen 80;
-    server_name example.com;
+    listen %env("PORT", "80");
+    server_name %env("SERVER_NAME", "example.com");
 
     %inline %security_headers
 
     location / {
-      root /var/www/html;
+      root %env("DOCUMENT_ROOT", "/var/www/html");
       index index.html;
     }
 
     location in ["/api", "=/v1", "~/v2", "~*/v3", "^~/v4"] {
-      proxy_pass http://backend;
+      proxy_pass %env("BACKEND_URL", "http://backend");
       proxy_set_header Host $host;
       proxy_set_header X-Real-IP $remote_addr;
     }
 
     location ~ \.php$ {
-      fastcgi_pass unix:/var/run/php-fpm.sock;
+      fastcgi_pass %env("PHP_FPM_SOCKET", "unix:/var/run/php-fpm.sock");
       fastcgi_index index.php;
       include fastcgi_params;
     }

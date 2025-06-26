@@ -15,6 +15,7 @@ export enum TokenType {
   // Special tokens
   Variable = 'VARIABLE',
   Inline = 'INLINE',
+  EnvVar = 'ENV_VAR',
   LocationModifier = 'LOCATION_MODIFIER',
   
   // Delimiters
@@ -228,6 +229,11 @@ export class Tokenizer {
     // Check if it's %inline
     if (value === '%inline') {
       return { type: TokenType.Inline, value, line: this.line, column: startColumn };
+    }
+    
+    // Check if it's %env followed by (
+    if (value === '%env' && this.position < this.input.length && this.input[this.position] === '(') {
+      return { type: TokenType.EnvVar, value, line: this.line, column: startColumn };
     }
     
     return { type: TokenType.Variable, value, line: this.line, column: startColumn };
