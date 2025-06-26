@@ -9,6 +9,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve, dirname, basename, extname } from 'path';
 import { parse } from '../parser/parser';
 import { generate } from '../generator/generator';
+import { validateNginxConfig } from '../validator/validator';
 
 const program = new Command();
 
@@ -21,7 +22,12 @@ program
   .option('--no-inline', 'Do not expand @inline directives')
   .option('--indent <string>', 'Indentation string (default: "  ")')
   .option('--stdout', 'Output to stdout instead of file')
-  .action((input: string, options: any) => {
+  .option('--validate', 'Validate generated nginx configuration')
+  .option('--validate-only', 'Only validate, do not generate output file')
+  .option('--no-docker', 'Use local nginx instead of Docker for validation')
+  .option('--nginx-cmd <command>', 'Nginx command for local validation (default: "nginx")')
+  .option('--docker-image <image>', 'Docker image for validation (default: "nginx:alpine")')
+  .action(async (input: string, options: any) => {
     try {
       // Resolve input path
       const inputPath = resolve(input);
@@ -47,6 +53,57 @@ program
         expandInline: options.inline !== false,
         indent: options.indent || '  '
       });
+      
+      // Validate if requested
+      if (options.validate || options.validateOnly) {
+        console.log('Validating nginx configuration...');
+        
+        const validationResult = await validateNginxConfig(output, {
+          useDocker: options.docker !== false,
+          nginxCommand: options.nginxCmd || 'nginx',
+          dockerImage: options.dockerImage || 'nginx:alpine'
+        });
+        
+        if (validationResult.isValid) {
+          console.log('✅ Configuration is valid');
+          if (validationResult.warnings.length > 0) {
+            console.log('\n⚠️  Warnings:');
+            validationResult.warnings.forEach(warning => {
+              console.log(`  ${warning}`);
+            });
+          }
+        } else {
+          console.log('❌ Configuration is invalid');
+          if (validationResult.errors.length > 0) {
+            console.log('\n🚨 Errors:');
+            validationResult.errors.forEach(error => {
+              console.log(`  ${error}`);
+            });
+          }
+          if (validationResult.warnings.length > 0) {
+            console.log('\n⚠️  Warnings:');
+            validationResult.warnings.forEach(warning => {
+              console.log(`  ${warning}`);
+            });
+          }
+          
+          if (options.validateOnly) {
+            process.exit(1);
+          }
+        }
+        
+        if (validationResult.output && validationResult.output.trim()) {
+          console.log('\n📋 Full nginx output:');
+          console.log(validationResult.output);
+        }
+        
+        console.log(''); // Empty line for better formatting
+      }
+      
+      // Skip file generation if validate-only mode
+      if (options.validateOnly) {
+        return;
+      }
       
       // Determine output handling
       if (options.stdout) {
