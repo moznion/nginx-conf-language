@@ -1,10 +1,10 @@
-$security_headers = {
+%security_headers = {
   add_header X-Frame-Options SAMEORIGIN;
   add_header X-Content-Type-Options nosniff;
   add_header X-XSS-Protection "1; mode=block";
 };
 
-$cache_headers = {
+%cache_headers = {
   expires "1h";
   add_header Cache-Control "public, max-age=3600";
 };
@@ -19,7 +19,7 @@ http {
     listen 80;
     server_name example.com;
 
-    @inline $security_headers
+    %inline %security_headers
 
     location / {
       root /var/www/html;
@@ -39,7 +39,7 @@ http {
     }
 
     location in ["=/robots.txt", "=/favicon.ico"] {
-      @inline $cache_headers
+      %inline %cache_headers
       log_not_found off;
       access_log off;
     }

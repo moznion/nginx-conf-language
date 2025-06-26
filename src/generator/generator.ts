@@ -171,9 +171,9 @@ export class Generator {
 
   private generateInline(node: InlineDirectiveNode): string {
     if (!this.options.expandInline) {
-      // If not expanding, output the original @inline directive
+      // If not expanding, output the original %inline directive
       const indent = this.getIndent();
-      return `${indent}@inline ${node.variableName}`;
+      return `${indent}%inline ${node.variableName}`;
     }
     
     // Expand the inline directive

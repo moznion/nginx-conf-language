@@ -93,7 +93,7 @@ describe('AST Node Types', () => {
     it('should represent a variable assignment', () => {
       const assignment: VariableAssignmentNode = {
         type: 'variable_assignment',
-        name: '$common_headers',
+        name: '%common_headers',
         value: {
           type: 'block',
           name: '',
@@ -112,7 +112,7 @@ describe('AST Node Types', () => {
       };
 
       expect(assignment.type).toBe('variable_assignment');
-      expect(assignment.name).toBe('$common_headers');
+      expect(assignment.name).toBe('%common_headers');
       expect((assignment.value as BlockNode).children).toHaveLength(1);
     });
   });
@@ -121,12 +121,12 @@ describe('AST Node Types', () => {
     it('should represent an inline directive', () => {
       const inline: InlineDirectiveNode = {
         type: 'inline',
-        variableName: '$common_headers',
+        variableName: '%common_headers',
         position: { line: 5, column: 3 }
       };
 
       expect(inline.type).toBe('inline');
-      expect(inline.variableName).toBe('$common_headers');
+      expect(inline.variableName).toBe('%common_headers');
     });
   });
 

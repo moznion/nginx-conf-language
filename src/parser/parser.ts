@@ -57,7 +57,7 @@ export class Parser {
       return this.parseDirective();
     }
 
-    // @inline directive
+    // %inline directive
     if (this.check(TokenType.Inline)) {
       return this.parseInlineDirective();
     }
@@ -119,10 +119,10 @@ export class Parser {
 
   private parseInlineDirective(): InlineDirectiveNode {
     const startPos = this.getCurrentPosition();
-    this.advance(); // consume @inline
+    this.advance(); // consume %inline
 
     if (!this.check(TokenType.Variable)) {
-      throw this.error('Expected variable after @inline');
+      throw this.error('Expected variable after %inline');
     }
 
     const variable = this.advance();

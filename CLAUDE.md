@@ -124,5 +124,14 @@ Both test suites ensure generated configs are syntactically correct for real ngi
 
 ## Special Syntax Transformations
 1. **location in [list]**: Expands to multiple location blocks
-2. **$variable = { block }**: Defines reusable code blocks
-3. **@inline $variable**: Expands code block inline
+2. **%variable = { block }**: Defines reusable code blocks
+3. **%inline %variable**: Expands code block inline
+
+## Recent Changes
+### 2025-06-26 - Syntax Unification
+- Changed variable literal prefix from `$` to `%`
+- Changed inline directive from `@inline` to `%inline`
+- All NCL special syntax now uses `%` prefix for consistency
+- Updated all code examples, tests, and documentation
+- Maintains compatibility with nginx built-in variables (still use `$`)
+- All 68 tests passing with unified syntax

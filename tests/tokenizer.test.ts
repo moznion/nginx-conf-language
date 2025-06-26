@@ -94,11 +94,11 @@ describe('Tokenizer', () => {
 
   describe('Variable and inline syntax', () => {
     it('should tokenize variable assignment', () => {
-      const input = '$common_headers = {\n  add_header X-Frame-Options SAMEORIGIN;\n};';
+      const input = '%common_headers = {\n  add_header X-Frame-Options SAMEORIGIN;\n};';
       const tokens = tokenize(input);
 
       expect(tokens).toEqual([
-        { type: TokenType.Variable, value: '$common_headers', line: 1, column: 1 },
+        { type: TokenType.Variable, value: '%common_headers', line: 1, column: 1 },
         { type: TokenType.Equals, value: '=', line: 1, column: 17 },
         { type: TokenType.LeftBrace, value: '{', line: 1, column: 19 },
         { type: TokenType.Identifier, value: 'add_header', line: 2, column: 3 },
@@ -112,12 +112,12 @@ describe('Tokenizer', () => {
     });
 
     it('should tokenize inline directive', () => {
-      const input = '@inline $common_headers';
+      const input = '%inline %common_headers';
       const tokens = tokenize(input);
 
       expect(tokens).toEqual([
-        { type: TokenType.Inline, value: '@inline', line: 1, column: 1 },
-        { type: TokenType.Variable, value: '$common_headers', line: 1, column: 9 },
+        { type: TokenType.Inline, value: '%inline', line: 1, column: 1 },
+        { type: TokenType.Variable, value: '%common_headers', line: 1, column: 9 },
         { type: TokenType.EOF, value: '', line: 1, column: 24 }
       ]);
     });

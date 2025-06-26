@@ -116,7 +116,7 @@ location ~ /regex {
 
   describe('Variable and inline generation', () => {
     it('should not output variable assignments', () => {
-      const input = `$common_headers = {
+      const input = `%common_headers = {
   add_header X-Frame-Options SAMEORIGIN;
 };`;
       const ast = parse(input);
@@ -126,13 +126,13 @@ location ~ /regex {
     });
 
     it('should expand inline directives', () => {
-      const input = `$common_headers = {
+      const input = `%common_headers = {
   add_header X-Frame-Options SAMEORIGIN;
   add_header X-Content-Type-Options nosniff;
 };
 
 server {
-  @inline $common_headers
+  %inline %common_headers
   listen 80;
 }`;
       const ast = parse(input);
@@ -146,7 +146,7 @@ server {
     });
 
     it('should handle complex config with all features', () => {
-      const input = `$security_headers = {
+      const input = `%security_headers = {
   add_header X-Frame-Options SAMEORIGIN;
   add_header X-XSS-Protection "1; mode=block";
 };
@@ -155,7 +155,7 @@ http {
   server {
     listen 80;
     
-    @inline $security_headers
+    %inline %security_headers
     
     location in ["/api", "/graphql"] {
       proxy_pass http://backend;
@@ -210,12 +210,12 @@ http {
   describe('Error handling', () => {
     it('should throw when inline variable is not defined', () => {
       const input = `server {
-  @inline $undefined_var
+  %inline %undefined_var
 }`;
       const ast = parse(input);
       
       expect(() => generate(ast, { expandInline: true }))
-        .toThrow('Undefined variable: $undefined_var');
+        .toThrow('Undefined variable: %undefined_var');
     });
   });
 });

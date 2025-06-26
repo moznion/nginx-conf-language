@@ -115,7 +115,7 @@ describe('Nginx Docker Validation Tests', () => {
 
   it.skipIf(!dockerAvailable)('should generate valid config with variable expansion', () => {
     const ncl = `
-      $common_headers = {
+      %common_headers = {
         add_header X-Frame-Options SAMEORIGIN;
         add_header X-Content-Type-Options nosniff;
       };
@@ -131,7 +131,7 @@ describe('Nginx Docker Validation Tests', () => {
           listen 80;
           server_name test.local;
           
-          @inline $common_headers
+          %inline %common_headers
           
           location / {
             return 200 "Hello";
@@ -193,12 +193,12 @@ describe('Nginx Docker Validation Tests', () => {
 
   it.skipIf(!dockerAvailable)('should generate valid config with complex features', () => {
     const ncl = `
-      $security = {
+      %security = {
         add_header Strict-Transport-Security "max-age=31536000" always;
         add_header X-Frame-Options DENY;
       };
       
-      $api_config = {
+      %api_config = {
         proxy_pass http://backend;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -226,7 +226,7 @@ describe('Nginx Docker Validation Tests', () => {
           listen 80;
           server_name example.com www.example.com;
           
-          @inline $security
+          %inline %security
           
           location / {
             root /var/www/html;
@@ -234,7 +234,7 @@ describe('Nginx Docker Validation Tests', () => {
           }
           
           location in ["/api", "/graphql"] {
-            @inline $api_config
+            %inline %api_config
           }
           
           location ~ \\.php$ {
@@ -264,7 +264,7 @@ describe('Nginx Docker Validation Tests', () => {
 
   it.skipIf(!dockerAvailable)('should validate real-world example', () => {
     const ncl = `
-      $cors_headers = {
+      %cors_headers = {
         add_header Access-Control-Allow-Origin "*";
         add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
         add_header Access-Control-Allow-Headers "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range";
@@ -296,7 +296,7 @@ describe('Nginx Docker Validation Tests', () => {
           server_name api.example.com;
 
           location in ["/api/v1", "/api/v2"] {
-            @inline $cors_headers
+            %inline %cors_headers
             
             proxy_pass http://backend;
             # Simplified proxy configuration

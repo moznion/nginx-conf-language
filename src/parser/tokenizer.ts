@@ -152,14 +152,12 @@ export class Tokenizer {
     }
 
     // Variables
-    if (char === '$') {
+    if (char === '%') {
       return this.readVariable();
     }
 
-    // @inline directive
-    if (char === '@') {
-      return this.readInline();
-    }
+    // %inline directive (handled by readVariable for %inline)
+    // Note: %inline is now handled as a special case in readVariable
 
     // Location modifiers
     if (this.isLocationModifier()) {
@@ -217,7 +215,7 @@ export class Tokenizer {
 
   private readVariable(): Token {
     const startColumn = this.column;
-    let value = '$';
+    let value = '%';
     this.position++;
     this.column++;
     
@@ -227,22 +225,14 @@ export class Tokenizer {
       this.column++;
     }
     
+    // Check if it's %inline
+    if (value === '%inline') {
+      return { type: TokenType.Inline, value, line: this.line, column: startColumn };
+    }
+    
     return { type: TokenType.Variable, value, line: this.line, column: startColumn };
   }
 
-  private readInline(): Token {
-    const startColumn = this.column;
-    
-    // Check if it's @inline
-    if (this.input.substring(this.position, this.position + 7) === '@inline') {
-      this.position += 7;
-      this.column += 7;
-      return { type: TokenType.Inline, value: '@inline', line: this.line, column: startColumn };
-    }
-    
-    // Otherwise, treat @ as part of identifier
-    return this.readIdentifier();
-  }
 
   private isLocationModifier(): boolean {
     const char = this.input[this.position];
@@ -316,7 +306,8 @@ export class Tokenizer {
           char === ';' || char === ',' || 
           char === '=' ||
           char === '"' || char === "'" ||
-          char === '(' || char === ')') {
+          char === '(' || char === ')' ||
+          char === '%' || char === '@') {
         break;
       }
       value += char;

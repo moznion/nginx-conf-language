@@ -133,7 +133,7 @@ describe('Parser', () => {
   describe('Variable and inline parsing', () => {
     it('should parse variable assignment', () => {
       const input = `
-        $common_headers = {
+        %common_headers = {
           add_header X-Frame-Options SAMEORIGIN;
           add_header X-Content-Type-Options nosniff;
         };
@@ -142,14 +142,14 @@ describe('Parser', () => {
 
       const assignment = ast.children[0] as VariableAssignmentNode;
       expect(assignment.type).toBe('variable_assignment');
-      expect(assignment.name).toBe('$common_headers');
+      expect(assignment.name).toBe('%common_headers');
       expect(assignment.value.children).toHaveLength(2);
     });
 
     it('should parse inline directive', () => {
       const input = `
         server {
-          @inline $common_headers
+          %inline %common_headers
           listen 80;
         }
       `;
@@ -159,12 +159,12 @@ describe('Parser', () => {
       const inline = server.children[0] as InlineDirectiveNode;
       
       expect(inline.type).toBe('inline');
-      expect(inline.variableName).toBe('$common_headers');
+      expect(inline.variableName).toBe('%common_headers');
     });
 
     it('should parse complex config with all features', () => {
       const input = `
-        $security_headers = {
+        %security_headers = {
           add_header X-Frame-Options SAMEORIGIN;
           add_header X-XSS-Protection "1; mode=block";
         };
@@ -173,7 +173,7 @@ describe('Parser', () => {
           server {
             listen 80;
             
-            @inline $security_headers
+            %inline %security_headers
             
             location in ["/api", "/graphql"] {
               proxy_pass http://backend;

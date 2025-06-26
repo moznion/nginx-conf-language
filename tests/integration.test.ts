@@ -19,8 +19,8 @@ describe('Integration Tests', () => {
     expect(output).toContain('location ~* /v3 {');
     expect(output).toContain('location ^~ /v4 {');
     expect(output).toContain('location = /robots.txt {');
-    expect(output).not.toContain('$security_headers');
-    expect(output).not.toContain('@inline');
+    expect(output).not.toContain('%security_headers');
+    expect(output).not.toContain('%inline');
   });
 
   it('should handle empty NCL file', () => {
@@ -61,13 +61,13 @@ describe('Integration Tests', () => {
 
   it('should handle complex nested structures', () => {
     const input = `
-      $common = {
+      %common = {
         gzip on;
         gzip_types text/plain application/json;
       };
 
       http {
-        @inline $common
+        %inline %common
 
         upstream backend {
           server 127.0.0.1:8080;
@@ -135,29 +135,29 @@ describe('Integration Tests', () => {
   it('should error on undefined variable inline', () => {
     const input = `
       server {
-        @inline $undefined_var
+        %inline %undefined_var
       }
     `;
     const ast = parse(input);
 
     expect(() => generate(ast, { expandInline: true }))
-      .toThrow('Undefined variable: $undefined_var');
+      .toThrow('Undefined variable: %undefined_var');
   });
 
   it('should handle no-inline option', () => {
     const input = `
-      $headers = {
+      %headers = {
         add_header X-Test "value";
       };
 
       server {
-        @inline $headers
+        %inline %headers
       }
     `;
     const ast = parse(input);
     const output = generate(ast, { expandInline: false });
 
-    expect(output).toContain('@inline $headers');
+    expect(output).toContain('%inline %headers');
     expect(output).not.toContain('add_header X-Test');
   });
 });

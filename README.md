@@ -32,18 +32,18 @@ location /v2 {
 Define reusable code blocks with variables:
 
 ```ncl
-$security_headers = {
+%security_headers = {
   add_header X-Frame-Options SAMEORIGIN;
   add_header X-Content-Type-Options nosniff;
 };
 ```
 
 ### 3. Inline Expansion
-Use `@inline` to expand code blocks:
+Use `%inline` to expand code blocks:
 
 ```ncl
 server {
-  @inline $security_headers
+  %inline %security_headers
   listen 80;
 }
 ```
@@ -100,7 +100,7 @@ console.log(nginxConf);
 
 Input file (`example.ncl`):
 ```ncl
-$security_headers = {
+%security_headers = {
   add_header X-Frame-Options SAMEORIGIN;
   add_header X-Content-Type-Options nosniff;
   add_header X-XSS-Protection "1; mode=block";
@@ -113,7 +113,7 @@ http {
     listen 80;
     server_name example.com;
 
-    @inline $security_headers
+    %inline %security_headers
 
     location in ["/api", "/graphql"] {
       proxy_pass http://backend;
