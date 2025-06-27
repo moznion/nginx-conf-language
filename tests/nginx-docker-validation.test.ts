@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { execSync } from 'child_process';
-import { writeFileSync, mkdtempSync, rmSync } from 'fs';
-import { tmpdir } from 'os';
-import { join } from 'path';
-import { parse } from '../src/parser/parser';
-import { generate } from '../src/generator/generator';
+import { execSync } from "child_process";
+import { mkdtempSync, rmSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { generate } from "../src/generator/generator";
+import { parse } from "../src/parser/parser";
 
 /**
  * These tests use Docker to validate generated nginx.conf files.
@@ -13,52 +13,56 @@ import { generate } from '../src/generator/generator';
 // Check Docker availability at module level
 let dockerAvailable = false;
 try {
-  execSync('docker --version', { stdio: 'pipe' });
-  execSync('docker ps', { stdio: 'pipe' });
-  dockerAvailable = true;
-  console.log('✅ Docker is available for tests');
+	execSync("docker --version", { stdio: "pipe" });
+	execSync("docker ps", { stdio: "pipe" });
+	dockerAvailable = true;
+	console.log("✅ Docker is available for tests");
 } catch (error) {
-  console.warn('⚠️  Docker is not available. Skipping Docker validation tests.');
+	console.warn("⚠️  Docker is not available. Skipping Docker validation tests.");
 }
 
-describe('Nginx Docker Validation Tests', () => {
-  let tempDir: string;
+describe("Nginx Docker Validation Tests", () => {
+	let tempDir: string;
 
-  beforeAll(() => {
-    // Create temporary directory for test files
-    tempDir = mkdtempSync(join(tmpdir(), 'ncl-docker-test-'));
-  });
+	beforeAll(() => {
+		// Create temporary directory for test files
+		tempDir = mkdtempSync(join(tmpdir(), "ncl-docker-test-"));
+	});
 
-  afterAll(() => {
-    // Clean up temp directory
-    if (tempDir) {
-      rmSync(tempDir, { recursive: true, force: true });
-    }
-  });
+	afterAll(() => {
+		// Clean up temp directory
+		if (tempDir) {
+			rmSync(tempDir, { recursive: true, force: true });
+		}
+	});
 
-  /**
-   * Helper function to validate nginx config using Docker
-   */
-  function validateNginxConfig(configContent: string, testName: string): string {
-    const confPath = join(tempDir, `${testName}.conf`);
-    writeFileSync(confPath, configContent);
+	/**
+	 * Helper function to validate nginx config using Docker
+	 */
+	function validateNginxConfig(
+		configContent: string,
+		testName: string,
+	): string {
+		const confPath = join(tempDir, `${testName}.conf`);
+		writeFileSync(confPath, configContent);
 
-    try {
-      // Run nginx -t in a Docker container
-      const result = execSync(
-        `docker run --rm -v "${confPath}:/etc/nginx/nginx.conf:ro" nginx:alpine nginx -t 2>&1`,
-        { encoding: 'utf-8' }
-      );
-      return result;
-    } catch (error: any) {
-      // Return error output for analysis
-      return error.stdout + error.stderr;
-    }
-  }
+		try {
+			// Run nginx -t in a Docker container
+			const result = execSync(
+				`docker run --rm -v "${confPath}:/etc/nginx/nginx.conf:ro" nginx:alpine nginx -t 2>&1`,
+				{ encoding: "utf-8" },
+			);
+			return result;
+		} catch (error: any) {
+			// Return error output for analysis
+			return error.stdout + error.stderr;
+		}
+	}
 
-
-  it.skipIf(!dockerAvailable)('should generate valid nginx config from simple NCL', () => {
-    const ncl = `
+	it.skipIf(!dockerAvailable)(
+		"should generate valid nginx config from simple NCL",
+		() => {
+			const ncl = `
       worker_processes auto;
       
       events {
@@ -78,16 +82,19 @@ describe('Nginx Docker Validation Tests', () => {
       }
     `;
 
-    const ast = parse(ncl);
-    const nginxConf = generate(ast);
-    
-    const result = validateNginxConfig(nginxConf, 'simple');
-    expect(result).toContain('syntax is ok');
-    expect(result).toContain('test is successful');
-  });
+			const ast = parse(ncl);
+			const nginxConf = generate(ast);
 
-  it.skipIf(!dockerAvailable)('should generate valid config with location in expansion', () => {
-    const ncl = `
+			const result = validateNginxConfig(nginxConf, "simple");
+			expect(result).toContain("syntax is ok");
+			expect(result).toContain("test is successful");
+		},
+	);
+
+	it.skipIf(!dockerAvailable)(
+		"should generate valid config with location in expansion",
+		() => {
+			const ncl = `
       worker_processes 1;
       
       events {
@@ -105,16 +112,19 @@ describe('Nginx Docker Validation Tests', () => {
       }
     `;
 
-    const ast = parse(ncl);
-    const nginxConf = generate(ast);
-    
-    const result = validateNginxConfig(nginxConf, 'location-in');
-    expect(result).toContain('syntax is ok');
-    expect(result).toContain('test is successful');
-  });
+			const ast = parse(ncl);
+			const nginxConf = generate(ast);
 
-  it.skipIf(!dockerAvailable)('should generate valid config with variable expansion', () => {
-    const ncl = `
+			const result = validateNginxConfig(nginxConf, "location-in");
+			expect(result).toContain("syntax is ok");
+			expect(result).toContain("test is successful");
+		},
+	);
+
+	it.skipIf(!dockerAvailable)(
+		"should generate valid config with variable expansion",
+		() => {
+			const ncl = `
       %common_headers = {
         add_header X-Frame-Options SAMEORIGIN;
         add_header X-Content-Type-Options nosniff;
@@ -140,16 +150,19 @@ describe('Nginx Docker Validation Tests', () => {
       }
     `;
 
-    const ast = parse(ncl);
-    const nginxConf = generate(ast, { expandInline: true });
-    
-    const result = validateNginxConfig(nginxConf, 'variables');
-    expect(result).toContain('syntax is ok');
-    expect(result).toContain('test is successful');
-  });
+			const ast = parse(ncl);
+			const nginxConf = generate(ast, { expandInline: true });
 
-  it.skipIf(!dockerAvailable)('should generate valid config with all modifiers', () => {
-    const ncl = `
+			const result = validateNginxConfig(nginxConf, "variables");
+			expect(result).toContain("syntax is ok");
+			expect(result).toContain("test is successful");
+		},
+	);
+
+	it.skipIf(!dockerAvailable)(
+		"should generate valid config with all modifiers",
+		() => {
+			const ncl = `
       worker_processes 1;
       
       events {
@@ -183,16 +196,19 @@ describe('Nginx Docker Validation Tests', () => {
       }
     `;
 
-    const ast = parse(ncl);
-    const nginxConf = generate(ast, { expandInline: true });
-    
-    const result = validateNginxConfig(nginxConf, 'modifiers');
-    expect(result).toContain('syntax is ok');
-    expect(result).toContain('test is successful');
-  });
+			const ast = parse(ncl);
+			const nginxConf = generate(ast, { expandInline: true });
 
-  it.skipIf(!dockerAvailable)('should generate valid config with complex features', () => {
-    const ncl = `
+			const result = validateNginxConfig(nginxConf, "modifiers");
+			expect(result).toContain("syntax is ok");
+			expect(result).toContain("test is successful");
+		},
+	);
+
+	it.skipIf(!dockerAvailable)(
+		"should generate valid config with complex features",
+		() => {
+			const ncl = `
       %security = {
         add_header Strict-Transport-Security "max-age=31536000" always;
         add_header X-Frame-Options DENY;
@@ -246,24 +262,25 @@ describe('Nginx Docker Validation Tests', () => {
       }
     `;
 
-    const ast = parse(ncl);
-    const nginxConf = generate(ast, { expandInline: true });
-    
-    const result = validateNginxConfig(nginxConf, 'complex');
-    
-    // Check if it's a syntax error or missing include file
-    if (result.includes('syntax is ok')) {
-      expect(result).toContain('test is successful');
-    } else {
-      // Log the actual error for debugging
-      console.log('Validation result:', result);
-      // For now, we'll accept that the syntax might be valid but includes missing
-      expect(result).not.toMatch(/unexpected|invalid|unknown directive/);
-    }
-  });
+			const ast = parse(ncl);
+			const nginxConf = generate(ast, { expandInline: true });
 
-  it.skipIf(!dockerAvailable)('should validate real-world example', () => {
-    const ncl = `
+			const result = validateNginxConfig(nginxConf, "complex");
+
+			// Check if it's a syntax error or missing include file
+			if (result.includes("syntax is ok")) {
+				expect(result).toContain("test is successful");
+			} else {
+				// Log the actual error for debugging
+				console.log("Validation result:", result);
+				// For now, we'll accept that the syntax might be valid but includes missing
+				expect(result).not.toMatch(/unexpected|invalid|unknown directive/);
+			}
+		},
+	);
+
+	it.skipIf(!dockerAvailable)("should validate real-world example", () => {
+		const ncl = `
       %cors_headers = {
         add_header Access-Control-Allow-Origin "*";
         add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
@@ -312,20 +329,20 @@ describe('Nginx Docker Validation Tests', () => {
       }
     `;
 
-    const ast = parse(ncl);
-    const nginxConf = generate(ast, { expandInline: true });
-    
-    // This will use the nginx:alpine image which includes mime.types
-    const result = validateNginxConfig(nginxConf, 'realworld');
-    
-    // Check if it's a syntax error or missing include file
-    if (result.includes('syntax is ok')) {
-      expect(result).toContain('test is successful');
-    } else {
-      // Log the actual error for debugging
-      console.log('Real-world validation result:', result);
-      // For now, we'll accept that the syntax might be valid but includes missing
-      expect(result).not.toMatch(/unexpected|invalid|unknown directive/);
-    }
-  });
+		const ast = parse(ncl);
+		const nginxConf = generate(ast, { expandInline: true });
+
+		// This will use the nginx:alpine image which includes mime.types
+		const result = validateNginxConfig(nginxConf, "realworld");
+
+		// Check if it's a syntax error or missing include file
+		if (result.includes("syntax is ok")) {
+			expect(result).toContain("test is successful");
+		} else {
+			// Log the actual error for debugging
+			console.log("Real-world validation result:", result);
+			// For now, we'll accept that the syntax might be valid but includes missing
+			expect(result).not.toMatch(/unexpected|invalid|unknown directive/);
+		}
+	});
 });

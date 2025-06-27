@@ -3,351 +3,494 @@
  */
 
 export enum TokenType {
-  // Literals
-  Identifier = 'IDENTIFIER',
-  Number = 'NUMBER',
-  String = 'STRING',
-  
-  // Keywords
-  Location = 'LOCATION',
-  In = 'IN',
-  
-  // Special tokens
-  Variable = 'VARIABLE',
-  Inline = 'INLINE',
-  EnvVar = 'ENV_VAR',
-  Import = 'IMPORT',
-  LocationModifier = 'LOCATION_MODIFIER',
-  
-  // Delimiters
-  LeftBrace = 'LEFT_BRACE',
-  RightBrace = 'RIGHT_BRACE',
-  LeftBracket = 'LEFT_BRACKET',
-  RightBracket = 'RIGHT_BRACKET',
-  LeftParen = 'LEFT_PAREN',
-  RightParen = 'RIGHT_PAREN',
-  Semicolon = 'SEMICOLON',
-  Comma = 'COMMA',
-  Equals = 'EQUALS',
-  
-  // End of file
-  EOF = 'EOF'
+	// Literals
+	Identifier = "IDENTIFIER",
+	Number = "NUMBER",
+	String = "STRING",
+
+	// Keywords
+	Location = "LOCATION",
+	In = "IN",
+
+	// Special tokens
+	Variable = "VARIABLE",
+	Inline = "INLINE",
+	EnvVar = "ENV_VAR",
+	Import = "IMPORT",
+	LocationModifier = "LOCATION_MODIFIER",
+
+	// Delimiters
+	LeftBrace = "LEFT_BRACE",
+	RightBrace = "RIGHT_BRACE",
+	LeftBracket = "LEFT_BRACKET",
+	RightBracket = "RIGHT_BRACKET",
+	LeftParen = "LEFT_PAREN",
+	RightParen = "RIGHT_PAREN",
+	Semicolon = "SEMICOLON",
+	Comma = "COMMA",
+	Equals = "EQUALS",
+
+	// End of file
+	EOF = "EOF",
 }
 
 export interface Token {
-  type: TokenType;
-  value: string;
-  line: number;
-  column: number;
+	type: TokenType;
+	value: string;
+	line: number;
+	column: number;
 }
 
 export class Tokenizer {
-  private input: string;
-  private position: number = 0;
-  private line: number = 1;
-  private column: number = 1;
-  private tokens: Token[] = [];
+	private input: string;
+	private position: number = 0;
+	private line: number = 1;
+	private column: number = 1;
+	private tokens: Token[] = [];
 
-  constructor(input: string) {
-    this.input = input;
-  }
+	constructor(input: string) {
+		this.input = input;
+	}
 
-  tokenize(): Token[] {
-    while (this.position < this.input.length) {
-      this.skipWhitespaceAndComments();
-      
-      if (this.position >= this.input.length) {
-        break;
-      }
+	tokenize(): Token[] {
+		while (this.position < this.input.length) {
+			this.skipWhitespaceAndComments();
 
-      const token = this.readToken();
-      if (token) {
-        this.tokens.push(token);
-      }
-    }
+			if (this.position >= this.input.length) {
+				break;
+			}
 
-    this.tokens.push({
-      type: TokenType.EOF,
-      value: '',
-      line: this.line,
-      column: this.column
-    });
+			const token = this.readToken();
+			if (token) {
+				this.tokens.push(token);
+			}
+		}
 
-    return this.tokens;
-  }
+		this.tokens.push({
+			type: TokenType.EOF,
+			value: "",
+			line: this.line,
+			column: this.column,
+		});
 
-  private skipWhitespaceAndComments(): void {
-    while (this.position < this.input.length) {
-      const char = this.input[this.position];
-      
-      // Skip whitespace
-      if (/\s/.test(char)) {
-        if (char === '\n') {
-          this.line++;
-          this.column = 1;
-        } else {
-          this.column++;
-        }
-        this.position++;
-        continue;
-      }
-      
-      // Skip comments
-      if (char === '#') {
-        while (this.position < this.input.length && this.input[this.position] !== '\n') {
-          this.position++;
-        }
-        continue;
-      }
-      
-      break;
-    }
-  }
+		return this.tokens;
+	}
 
-  private readToken(): Token | null {
-    const startColumn = this.column;
-    const char = this.input[this.position];
+	private skipWhitespaceAndComments(): void {
+		while (this.position < this.input.length) {
+			const char = this.input[this.position];
 
-    // Single character tokens
-    switch (char) {
-      case '{':
-        this.position++;
-        this.column++;
-        return { type: TokenType.LeftBrace, value: '{', line: this.line, column: startColumn };
-      case '}':
-        this.position++;
-        this.column++;
-        return { type: TokenType.RightBrace, value: '}', line: this.line, column: startColumn };
-      case '[':
-        this.position++;
-        this.column++;
-        return { type: TokenType.LeftBracket, value: '[', line: this.line, column: startColumn };
-      case ']':
-        this.position++;
-        this.column++;
-        return { type: TokenType.RightBracket, value: ']', line: this.line, column: startColumn };
-      case ';':
-        this.position++;
-        this.column++;
-        return { type: TokenType.Semicolon, value: ';', line: this.line, column: startColumn };
-      case ',':
-        this.position++;
-        this.column++;
-        return { type: TokenType.Comma, value: ',', line: this.line, column: startColumn };
-      case '=':
-        this.position++;
-        this.column++;
-        return { type: TokenType.Equals, value: '=', line: this.line, column: startColumn };
-      case '(':
-        this.position++;
-        this.column++;
-        return { type: TokenType.LeftParen, value: '(', line: this.line, column: startColumn };
-      case ')':
-        this.position++;
-        this.column++;
-        return { type: TokenType.RightParen, value: ')', line: this.line, column: startColumn };
-    }
+			// Skip whitespace
+			if (/\s/.test(char)) {
+				if (char === "\n") {
+					this.line++;
+					this.column = 1;
+				} else {
+					this.column++;
+				}
+				this.position++;
+				continue;
+			}
 
-    // Strings
-    if (char === '"' || char === "'") {
-      return this.readString(char);
-    }
+			// Skip comments
+			if (char === "#") {
+				while (
+					this.position < this.input.length &&
+					this.input[this.position] !== "\n"
+				) {
+					this.position++;
+				}
+				continue;
+			}
 
-    // Variables
-    if (char === '%') {
-      return this.readVariable();
-    }
+			break;
+		}
+	}
 
-    // %inline directive (handled by readVariable for %inline)
-    // Note: %inline is now handled as a special case in readVariable
+	private readToken(): Token | null {
+		const startColumn = this.column;
+		const char = this.input[this.position];
 
-    // Location modifiers
-    if (this.isLocationModifier()) {
-      return this.readLocationModifier();
-    }
+		// Single character tokens
+		switch (char) {
+			case "{":
+				this.position++;
+				this.column++;
+				return {
+					type: TokenType.LeftBrace,
+					value: "{",
+					line: this.line,
+					column: startColumn,
+				};
+			case "}":
+				this.position++;
+				this.column++;
+				return {
+					type: TokenType.RightBrace,
+					value: "}",
+					line: this.line,
+					column: startColumn,
+				};
+			case "[":
+				this.position++;
+				this.column++;
+				return {
+					type: TokenType.LeftBracket,
+					value: "[",
+					line: this.line,
+					column: startColumn,
+				};
+			case "]":
+				this.position++;
+				this.column++;
+				return {
+					type: TokenType.RightBracket,
+					value: "]",
+					line: this.line,
+					column: startColumn,
+				};
+			case ";":
+				this.position++;
+				this.column++;
+				return {
+					type: TokenType.Semicolon,
+					value: ";",
+					line: this.line,
+					column: startColumn,
+				};
+			case ",":
+				this.position++;
+				this.column++;
+				return {
+					type: TokenType.Comma,
+					value: ",",
+					line: this.line,
+					column: startColumn,
+				};
+			case "=":
+				this.position++;
+				this.column++;
+				return {
+					type: TokenType.Equals,
+					value: "=",
+					line: this.line,
+					column: startColumn,
+				};
+			case "(":
+				this.position++;
+				this.column++;
+				return {
+					type: TokenType.LeftParen,
+					value: "(",
+					line: this.line,
+					column: startColumn,
+				};
+			case ")":
+				this.position++;
+				this.column++;
+				return {
+					type: TokenType.RightParen,
+					value: ")",
+					line: this.line,
+					column: startColumn,
+				};
+		}
 
-    // Numbers
-    if (/\d/.test(char)) {
-      return this.readNumber();
-    }
+		// Strings
+		if (char === '"' || char === "'") {
+			return this.readString(char);
+		}
 
-    // Identifiers and keywords
-    if (this.isIdentifierStart(char)) {
-      return this.readIdentifier();
-    }
+		// Variables
+		if (char === "%") {
+			return this.readVariable();
+		}
 
-    // Unknown character - include it in identifier
-    return this.readIdentifier();
-  }
+		// %inline directive (handled by readVariable for %inline)
+		// Note: %inline is now handled as a special case in readVariable
 
-  private readString(quote: string): Token {
-    const startColumn = this.column;
-    this.position++; // Skip opening quote
-    this.column++;
-    
-    let value = '';
-    while (this.position < this.input.length && this.input[this.position] !== quote) {
-      if (this.input[this.position] === '\\' && this.position + 1 < this.input.length) {
-        // Handle escape sequences
-        this.position++;
-        this.column++;
-        value += this.input[this.position];
-      } else {
-        value += this.input[this.position];
-      }
-      
-      if (this.input[this.position] === '\n') {
-        this.line++;
-        this.column = 1;
-      } else {
-        this.column++;
-      }
-      this.position++;
-    }
-    
-    if (this.position >= this.input.length) {
-      throw new Error(`Unterminated string at line ${this.line}, column ${startColumn}`);
-    }
-    
-    this.position++; // Skip closing quote
-    this.column++;
-    
-    return { type: TokenType.String, value, line: this.line, column: startColumn };
-  }
+		// Location modifiers
+		if (this.isLocationModifier()) {
+			return this.readLocationModifier();
+		}
 
-  private readVariable(): Token {
-    const startColumn = this.column;
-    let value = '%';
-    this.position++;
-    this.column++;
-    
-    while (this.position < this.input.length && this.isIdentifierPart(this.input[this.position])) {
-      value += this.input[this.position];
-      this.position++;
-      this.column++;
-    }
-    
-    // Check if it's %inline followed by (
-    if (value === '%inline' && this.position < this.input.length && this.input[this.position] === '(') {
-      return { type: TokenType.Inline, value, line: this.line, column: startColumn };
-    }
-    
-    // Check if it's %env followed by (
-    if (value === '%env' && this.position < this.input.length && this.input[this.position] === '(') {
-      return { type: TokenType.EnvVar, value, line: this.line, column: startColumn };
-    }
-    
-    // Check if it's %import followed by (
-    if (value === '%import' && this.position < this.input.length && this.input[this.position] === '(') {
-      return { type: TokenType.Import, value, line: this.line, column: startColumn };
-    }
-    
-    return { type: TokenType.Variable, value, line: this.line, column: startColumn };
-  }
+		// Numbers
+		if (/\d/.test(char)) {
+			return this.readNumber();
+		}
 
+		// Identifiers and keywords
+		if (this.isIdentifierStart(char)) {
+			return this.readIdentifier();
+		}
 
-  private isLocationModifier(): boolean {
-    const char = this.input[this.position];
-    if (char === '~') {
-      // Check for ~*
-      if (this.position + 1 < this.input.length && this.input[this.position + 1] === '*') {
-        return true;
-      }
-      return true;
-    }
-    if (char === '=' || char === '^') {
-      // Check for ^~
-      if (char === '^' && this.position + 1 < this.input.length && this.input[this.position + 1] === '~') {
-        return true;
-      }
-      // Single = is location modifier only in location context
-      // This is handled by parser context
-      return false;
-    }
-    return false;
-  }
+		// Unknown character - include it in identifier
+		return this.readIdentifier();
+	}
 
-  private readLocationModifier(): Token {
-    const startColumn = this.column;
-    let value = '';
-    
-    if (this.input[this.position] === '~') {
-      value = '~';
-      this.position++;
-      this.column++;
-      
-      if (this.position < this.input.length && this.input[this.position] === '*') {
-        value += '*';
-        this.position++;
-        this.column++;
-      }
-    } else if (this.input[this.position] === '^' && 
-               this.position + 1 < this.input.length && 
-               this.input[this.position + 1] === '~') {
-      value = '^~';
-      this.position += 2;
-      this.column += 2;
-    }
-    
-    return { type: TokenType.LocationModifier, value, line: this.line, column: startColumn };
-  }
+	private readString(quote: string): Token {
+		const startColumn = this.column;
+		this.position++; // Skip opening quote
+		this.column++;
 
-  private readNumber(): Token {
-    const startColumn = this.column;
-    let value = '';
-    
-    while (this.position < this.input.length && /\d/.test(this.input[this.position])) {
-      value += this.input[this.position];
-      this.position++;
-      this.column++;
-    }
-    
-    return { type: TokenType.Number, value, line: this.line, column: startColumn };
-  }
+		let value = "";
+		while (
+			this.position < this.input.length &&
+			this.input[this.position] !== quote
+		) {
+			if (
+				this.input[this.position] === "\\" &&
+				this.position + 1 < this.input.length
+			) {
+				// Handle escape sequences
+				this.position++;
+				this.column++;
+				value += this.input[this.position];
+			} else {
+				value += this.input[this.position];
+			}
 
-  private readIdentifier(): Token {
-    const startColumn = this.column;
-    let value = '';
-    
-    // Read until we hit whitespace or delimiter
-    while (this.position < this.input.length) {
-      const char = this.input[this.position];
-      if (/\s/.test(char) || 
-          char === '{' || char === '}' || 
-          char === '[' || char === ']' || 
-          char === ';' || char === ',' || 
-          char === '=' ||
-          char === '"' || char === "'" ||
-          char === '(' || char === ')' ||
-          char === '%' || char === '@') {
-        break;
-      }
-      value += char;
-      this.position++;
-      this.column++;
-    }
-    
-    // Check for keywords
-    if (value === 'location') {
-      return { type: TokenType.Location, value, line: this.line, column: startColumn };
-    }
-    if (value === 'in') {
-      return { type: TokenType.In, value, line: this.line, column: startColumn };
-    }
-    
-    return { type: TokenType.Identifier, value, line: this.line, column: startColumn };
-  }
+			if (this.input[this.position] === "\n") {
+				this.line++;
+				this.column = 1;
+			} else {
+				this.column++;
+			}
+			this.position++;
+		}
 
-  private isIdentifierStart(char: string): boolean {
-    return /[a-zA-Z_]/.test(char);
-  }
+		if (this.position >= this.input.length) {
+			throw new Error(
+				`Unterminated string at line ${this.line}, column ${startColumn}`,
+			);
+		}
 
-  private isIdentifierPart(char: string): boolean {
-    return /[a-zA-Z0-9_]/.test(char);
-  }
+		this.position++; // Skip closing quote
+		this.column++;
+
+		return {
+			type: TokenType.String,
+			value,
+			line: this.line,
+			column: startColumn,
+		};
+	}
+
+	private readVariable(): Token {
+		const startColumn = this.column;
+		let value = "%";
+		this.position++;
+		this.column++;
+
+		while (
+			this.position < this.input.length &&
+			this.isIdentifierPart(this.input[this.position])
+		) {
+			value += this.input[this.position];
+			this.position++;
+			this.column++;
+		}
+
+		// Check if it's %inline followed by (
+		if (
+			value === "%inline" &&
+			this.position < this.input.length &&
+			this.input[this.position] === "("
+		) {
+			return {
+				type: TokenType.Inline,
+				value,
+				line: this.line,
+				column: startColumn,
+			};
+		}
+
+		// Check if it's %env followed by (
+		if (
+			value === "%env" &&
+			this.position < this.input.length &&
+			this.input[this.position] === "("
+		) {
+			return {
+				type: TokenType.EnvVar,
+				value,
+				line: this.line,
+				column: startColumn,
+			};
+		}
+
+		// Check if it's %import followed by (
+		if (
+			value === "%import" &&
+			this.position < this.input.length &&
+			this.input[this.position] === "("
+		) {
+			return {
+				type: TokenType.Import,
+				value,
+				line: this.line,
+				column: startColumn,
+			};
+		}
+
+		return {
+			type: TokenType.Variable,
+			value,
+			line: this.line,
+			column: startColumn,
+		};
+	}
+
+	private isLocationModifier(): boolean {
+		const char = this.input[this.position];
+		if (char === "~") {
+			// Check for ~*
+			if (
+				this.position + 1 < this.input.length &&
+				this.input[this.position + 1] === "*"
+			) {
+				return true;
+			}
+			return true;
+		}
+		if (char === "=" || char === "^") {
+			// Check for ^~
+			if (
+				char === "^" &&
+				this.position + 1 < this.input.length &&
+				this.input[this.position + 1] === "~"
+			) {
+				return true;
+			}
+			// Single = is location modifier only in location context
+			// This is handled by parser context
+			return false;
+		}
+		return false;
+	}
+
+	private readLocationModifier(): Token {
+		const startColumn = this.column;
+		let value = "";
+
+		if (this.input[this.position] === "~") {
+			value = "~";
+			this.position++;
+			this.column++;
+
+			if (
+				this.position < this.input.length &&
+				this.input[this.position] === "*"
+			) {
+				value += "*";
+				this.position++;
+				this.column++;
+			}
+		} else if (
+			this.input[this.position] === "^" &&
+			this.position + 1 < this.input.length &&
+			this.input[this.position + 1] === "~"
+		) {
+			value = "^~";
+			this.position += 2;
+			this.column += 2;
+		}
+
+		return {
+			type: TokenType.LocationModifier,
+			value,
+			line: this.line,
+			column: startColumn,
+		};
+	}
+
+	private readNumber(): Token {
+		const startColumn = this.column;
+		let value = "";
+
+		while (
+			this.position < this.input.length &&
+			/\d/.test(this.input[this.position])
+		) {
+			value += this.input[this.position];
+			this.position++;
+			this.column++;
+		}
+
+		return {
+			type: TokenType.Number,
+			value,
+			line: this.line,
+			column: startColumn,
+		};
+	}
+
+	private readIdentifier(): Token {
+		const startColumn = this.column;
+		let value = "";
+
+		// Read until we hit whitespace or delimiter
+		while (this.position < this.input.length) {
+			const char = this.input[this.position];
+			if (
+				/\s/.test(char) ||
+				char === "{" ||
+				char === "}" ||
+				char === "[" ||
+				char === "]" ||
+				char === ";" ||
+				char === "," ||
+				char === "=" ||
+				char === '"' ||
+				char === "'" ||
+				char === "(" ||
+				char === ")" ||
+				char === "%" ||
+				char === "@"
+			) {
+				break;
+			}
+			value += char;
+			this.position++;
+			this.column++;
+		}
+
+		// Check for keywords
+		if (value === "location") {
+			return {
+				type: TokenType.Location,
+				value,
+				line: this.line,
+				column: startColumn,
+			};
+		}
+		if (value === "in") {
+			return {
+				type: TokenType.In,
+				value,
+				line: this.line,
+				column: startColumn,
+			};
+		}
+
+		return {
+			type: TokenType.Identifier,
+			value,
+			line: this.line,
+			column: startColumn,
+		};
+	}
+
+	private isIdentifierStart(char: string): boolean {
+		return /[a-zA-Z_]/.test(char);
+	}
+
+	private isIdentifierPart(char: string): boolean {
+		return /[a-zA-Z0-9_]/.test(char);
+	}
 }
 
 export function tokenize(input: string): Token[] {
-  const tokenizer = new Tokenizer(input);
-  return tokenizer.tokenize();
+	const tokenizer = new Tokenizer(input);
+	return tokenizer.tokenize();
 }

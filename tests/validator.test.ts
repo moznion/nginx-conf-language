@@ -1,21 +1,26 @@
-import { describe, it, expect, beforeAll } from 'vitest';
-import { execSync } from 'child_process';
-import { NginxValidator, validateNginxConfig } from '../src/validator/validator';
+import { execSync } from "child_process";
+import { beforeAll, describe, expect, it } from "vitest";
+import {
+	NginxValidator,
+	validateNginxConfig,
+} from "../src/validator/validator";
 
 // Check Docker availability
 let dockerAvailable = false;
 try {
-  execSync('docker --version', { stdio: 'pipe' });
-  execSync('docker ps', { stdio: 'pipe' });
-  dockerAvailable = true;
+	execSync("docker --version", { stdio: "pipe" });
+	execSync("docker ps", { stdio: "pipe" });
+	dockerAvailable = true;
 } catch {
-  // Docker not available
+	// Docker not available
 }
 
-describe('NginxValidator', () => {
-  describe('Docker validation', () => {
-    it.skipIf(!dockerAvailable)('should validate a simple valid nginx config', async () => {
-      const config = `
+describe("NginxValidator", () => {
+	describe("Docker validation", () => {
+		it.skipIf(!dockerAvailable)(
+			"should validate a simple valid nginx config",
+			async () => {
+				const config = `
         worker_processes auto;
         
         events {
@@ -33,15 +38,18 @@ describe('NginxValidator', () => {
           }
         }
       `;
-      
-      const result = await validateNginxConfig(config, { useDocker: true });
-      
-      expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
-    });
-    
-    it.skipIf(!dockerAvailable)('should detect invalid nginx config', async () => {
-      const config = `
+
+				const result = await validateNginxConfig(config, { useDocker: true });
+
+				expect(result.isValid).toBe(true);
+				expect(result.errors).toHaveLength(0);
+			},
+		);
+
+		it.skipIf(!dockerAvailable)(
+			"should detect invalid nginx config",
+			async () => {
+				const config = `
         worker_processes auto;
         
         events {
@@ -61,15 +69,16 @@ describe('NginxValidator', () => {
           }
         }
       `;
-      
-      const result = await validateNginxConfig(config, { useDocker: true });
-      
-      expect(result.isValid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
-    });
-    
-    it.skipIf(!dockerAvailable)('should handle syntax errors', async () => {
-      const config = `
+
+				const result = await validateNginxConfig(config, { useDocker: true });
+
+				expect(result.isValid).toBe(false);
+				expect(result.errors.length).toBeGreaterThan(0);
+			},
+		);
+
+		it.skipIf(!dockerAvailable)("should handle syntax errors", async () => {
+			const config = `
         worker_processes auto;
         
         events {
@@ -88,15 +97,17 @@ describe('NginxValidator', () => {
           }
         }
       `;
-      
-      const result = await validateNginxConfig(config, { useDocker: true });
-      
-      expect(result.isValid).toBe(false);
-      expect(result.errors.length).toBeGreaterThan(0);
-    });
-    
-    it.skipIf(!dockerAvailable)('should validate location regex patterns', async () => {
-      const config = `
+
+			const result = await validateNginxConfig(config, { useDocker: true });
+
+			expect(result.isValid).toBe(false);
+			expect(result.errors.length).toBeGreaterThan(0);
+		});
+
+		it.skipIf(!dockerAvailable)(
+			"should validate location regex patterns",
+			async () => {
+				const config = `
         worker_processes auto;
         
         events {
@@ -118,17 +129,18 @@ describe('NginxValidator', () => {
           }
         }
       `;
-      
-      const result = await validateNginxConfig(config, { useDocker: true });
-      
-      expect(result.isValid).toBe(true);
-      expect(result.errors).toHaveLength(0);
-    });
-  });
 
-  describe('Local nginx validation', () => {
-    it('should handle missing nginx gracefully', async () => {
-      const config = `
+				const result = await validateNginxConfig(config, { useDocker: true });
+
+				expect(result.isValid).toBe(true);
+				expect(result.errors).toHaveLength(0);
+			},
+		);
+	});
+
+	describe("Local nginx validation", () => {
+		it("should handle missing nginx gracefully", async () => {
+			const config = `
         worker_processes auto;
         
         events {
@@ -146,37 +158,53 @@ describe('NginxValidator', () => {
           }
         }
       `;
-      
-      const result = await validateNginxConfig(config, { 
-        useDocker: false,
-        nginxCommand: 'nginx-that-does-not-exist'
-      });
-      
-      expect(result.isValid).toBe(false);
-      expect(result.errors).toContain('nginx is not installed or not in PATH: nginx-that-does-not-exist');
-      expect(result.warnings).toContain('Consider installing nginx or using Docker validation (--use-docker)');
-    });
-  });
 
-  describe('Validator class', () => {
-    it('should report validation method correctly', () => {
-      const dockerValidator = new NginxValidator({ useDocker: true, dockerImage: 'nginx:latest' });
-      expect(dockerValidator.getValidationMethod()).toBe('Docker (nginx:latest)');
-      
-      const localValidator = new NginxValidator({ useDocker: false, nginxCommand: 'nginx-custom' });
-      expect(localValidator.getValidationMethod()).toBe('Local nginx (nginx-custom)');
-    });
-    
-    it('should use default options', () => {
-      const validator = new NginxValidator();
-      expect(validator.getValidationMethod()).toBe('Docker (nginx:alpine)');
-    });
-  });
+			const result = await validateNginxConfig(config, {
+				useDocker: false,
+				nginxCommand: "nginx-that-does-not-exist",
+			});
 
-  describe('Output parsing', () => {
-    it.skipIf(!dockerAvailable)('should parse nginx warnings correctly', async () => {
-      // This config might generate warnings in some nginx versions
-      const config = `
+			expect(result.isValid).toBe(false);
+			expect(result.errors).toContain(
+				"nginx is not installed or not in PATH: nginx-that-does-not-exist",
+			);
+			expect(result.warnings).toContain(
+				"Consider installing nginx or using Docker validation (--use-docker)",
+			);
+		});
+	});
+
+	describe("Validator class", () => {
+		it("should report validation method correctly", () => {
+			const dockerValidator = new NginxValidator({
+				useDocker: true,
+				dockerImage: "nginx:latest",
+			});
+			expect(dockerValidator.getValidationMethod()).toBe(
+				"Docker (nginx:latest)",
+			);
+
+			const localValidator = new NginxValidator({
+				useDocker: false,
+				nginxCommand: "nginx-custom",
+			});
+			expect(localValidator.getValidationMethod()).toBe(
+				"Local nginx (nginx-custom)",
+			);
+		});
+
+		it("should use default options", () => {
+			const validator = new NginxValidator();
+			expect(validator.getValidationMethod()).toBe("Docker (nginx:alpine)");
+		});
+	});
+
+	describe("Output parsing", () => {
+		it.skipIf(!dockerAvailable)(
+			"should parse nginx warnings correctly",
+			async () => {
+				// This config might generate warnings in some nginx versions
+				const config = `
         worker_processes auto;
         
         events {
@@ -197,11 +225,12 @@ describe('NginxValidator', () => {
           }
         }
       `;
-      
-      const result = await validateNginxConfig(config, { useDocker: true });
-      
-      expect(result.isValid).toBe(true);
-      expect(result.output).toBeTruthy();
-    });
-  });
+
+				const result = await validateNginxConfig(config, { useDocker: true });
+
+				expect(result.isValid).toBe(true);
+				expect(result.output).toBeTruthy();
+			},
+		);
+	});
 });

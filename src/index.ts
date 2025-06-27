@@ -2,7 +2,7 @@
  * Main entry point for nginx-configuration-language library
  */
 
-export { parse } from './parser/parser';
-export { generate, GeneratorOptions } from './generator/generator';
-export { tokenize, Token, TokenType } from './parser/tokenizer';
-export * from './parser/ast';
+export { GeneratorOptions, generate } from "./generator/generator";
+export * from "./parser/ast";
+export { parse } from "./parser/parser";
+export { Token, TokenType, tokenize } from "./parser/tokenizer";
