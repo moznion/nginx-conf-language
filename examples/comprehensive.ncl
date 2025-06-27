@@ -54,7 +54,7 @@ http {
   keepalive_timeout %env("KEEPALIVE_TIMEOUT", "65");
   
   # Inline expansion of gzip configuration
-  %inline %gzip_config
+  %inline(%gzip_config);
   
   # Rate limiting zone  
   limit_req_zone $binary_remote_addr zone=api:10m rate=%env("RATE_LIMIT", "10r/s");
@@ -69,14 +69,14 @@ http {
     ssl_certificate_key %env("SSL_KEY_PATH", "/etc/ssl/private/server.key");
     
     # Inline SSL configuration
-    %inline %ssl_config
+    %inline(%ssl_config);
     
     # Security headers
-    %inline %security_headers
+    %inline(%security_headers);
     
     # Multiple location paths with different modifiers
     location in ["/api/v1", "/api/v2", "/api/v3"] {
-      %inline %rate_limiting
+      %inline(%rate_limiting);
       proxy_pass %env("API_BACKEND", "http://api-backend");
       proxy_set_header Host $host;
       proxy_set_header X-Real-IP $remote_addr;
@@ -152,7 +152,7 @@ http {
     allow %env("ADMIN_ALLOW_IP", "127.0.0.1");
     deny all;
     
-    %inline %security_headers
+    %inline(%security_headers);
     
     location / {
       proxy_pass %env("ADMIN_BACKEND", "http://admin-backend:3000");

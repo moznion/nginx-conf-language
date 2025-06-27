@@ -170,7 +170,7 @@ describe('Environment Variables', () => {
         
         server {
           listen 443 ssl;
-          %inline %ssl_config
+          %inline(%ssl_config);
         }
       `;
       

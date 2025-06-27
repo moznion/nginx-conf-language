@@ -63,7 +63,7 @@ Use `%inline` to expand code blocks:
 
 ```ncl
 server {
-  %inline %security_headers
+  %inline(%security_headers);
   listen 80;
 }
 ```
@@ -108,7 +108,7 @@ const nclContent = `
   server {
     listen %env("PORT", "80");
     server_name %env("DOMAIN", "localhost");
-    %inline %cache_headers
+    %inline(%cache_headers);
   }
 `;
 
@@ -134,7 +134,7 @@ http {
     listen %env("PORT", "80");
     server_name %env("SERVER_NAME", "example.com");
 
-    %inline %security_headers
+    %inline(%security_headers);
 
     location in ["/api", "/graphql"] {
       proxy_pass %env("BACKEND_URL", "http://backend");

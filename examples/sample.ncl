@@ -19,7 +19,7 @@ http {
     listen %env("PORT", "80");
     server_name %env("SERVER_NAME", "example.com");
 
-    %inline %security_headers
+    %inline(%security_headers);
 
     location / {
       root %env("DOCUMENT_ROOT", "/var/www/html");
@@ -39,7 +39,7 @@ http {
     }
 
     location in ["=/robots.txt", "=/favicon.ico"] {
-      %inline %cache_headers
+      %inline(%cache_headers);
       log_not_found off;
       access_log off;
     }

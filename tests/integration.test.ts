@@ -79,7 +79,7 @@ describe('Integration Tests', () => {
       };
 
       http {
-        %inline %common
+        %inline(%common);
 
         upstream backend {
           server 127.0.0.1:8080;
@@ -147,7 +147,7 @@ describe('Integration Tests', () => {
   it('should error on undefined variable inline', () => {
     const input = `
       server {
-        %inline %undefined_var
+        %inline(%undefined_var);
       }
     `;
     const ast = parse(input);
@@ -163,13 +163,13 @@ describe('Integration Tests', () => {
       };
 
       server {
-        %inline %headers
+        %inline(%headers);
       }
     `;
     const ast = parse(input);
     const output = generate(ast, { expandInline: false });
 
-    expect(output).toContain('%inline %headers');
+    expect(output).toContain('%inline(%headers);');
     expect(output).not.toContain('add_header X-Test');
   });
 
@@ -187,7 +187,7 @@ describe('Integration Tests', () => {
         listen %env("SERVER_PORT", "80");
         server_name %env("SERVER_NAME", "localhost");
         
-        %inline %ssl_config
+        %inline(%ssl_config);
         
         location %env("API_PATH", "/api") {
           proxy_pass %env("BACKEND_URL", "http://localhost:3000");

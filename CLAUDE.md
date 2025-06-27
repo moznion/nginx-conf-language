@@ -130,11 +130,21 @@ Both test suites ensure generated configs are syntactically correct for real ngi
 ## Special Syntax Transformations
 1. **location in [list]**: Expands to multiple location blocks
 2. **%variable = { block }**: Defines reusable code blocks
-3. **%inline %variable**: Expands code block inline
+3. **%inline(%variable);**: Expands code block inline (function-like syntax)
 4. **%env("VAR_NAME")**: Resolves environment variable at generation time
 5. **%env("VAR_NAME", "default")**: Resolves environment variable with default value
 
 ## Recent Changes
+### 2025-06-27 - Updated %inline to Function-like Syntax
+- Changed `%inline %variable` syntax to function-like `%inline(%variable);` format
+- Updated tokenizer to recognize `%inline` followed by `(` as inline token
+- Updated parser to expect parentheses and semicolon: `%inline(%var);`
+- Updated generator to output new syntax when expandInline is false
+- Updated all tests (tokenizer, parser, generator, integration, nginx-docker-validation, environment-variables)
+- Updated all documentation (README.md) and example files (sample.ncl, comprehensive.ncl, environment-demo.ncl)
+- Provides clearer distinction between NCL directives and variable references
+- All 92 tests passing
+
 ### 2025-06-26 - Environment Variable Support
 - Added `%env("VAR_NAME")` syntax for environment variable resolution
 - Support for default values with `%env("VAR_NAME", "default")`

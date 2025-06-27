@@ -131,7 +131,7 @@ describe('Nginx Docker Validation Tests', () => {
           listen 80;
           server_name test.local;
           
-          %inline %common_headers
+          %inline(%common_headers);
           
           location / {
             return 200 "Hello";
@@ -226,7 +226,7 @@ describe('Nginx Docker Validation Tests', () => {
           listen 80;
           server_name example.com www.example.com;
           
-          %inline %security
+          %inline(%security);
           
           location / {
             root /var/www/html;
@@ -234,7 +234,7 @@ describe('Nginx Docker Validation Tests', () => {
           }
           
           location in ["/api", "/graphql"] {
-            %inline %api_config
+            %inline(%api_config);
           }
           
           location ~ \\.php$ {
@@ -296,7 +296,7 @@ describe('Nginx Docker Validation Tests', () => {
           server_name api.example.com;
 
           location in ["/api/v1", "/api/v2"] {
-            %inline %cors_headers
+            %inline(%cors_headers);
             
             proxy_pass http://backend;
             # Simplified proxy configuration

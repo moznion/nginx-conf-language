@@ -226,8 +226,8 @@ export class Tokenizer {
       this.column++;
     }
     
-    // Check if it's %inline
-    if (value === '%inline') {
+    // Check if it's %inline followed by (
+    if (value === '%inline' && this.position < this.input.length && this.input[this.position] === '(') {
       return { type: TokenType.Inline, value, line: this.line, column: startColumn };
     }
     

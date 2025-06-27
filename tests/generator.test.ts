@@ -132,7 +132,7 @@ location ~ /regex {
 };
 
 server {
-  %inline %common_headers
+  %inline(%common_headers);
   listen 80;
 }`;
       const ast = parse(input);
@@ -155,7 +155,7 @@ http {
   server {
     listen 80;
     
-    %inline %security_headers
+    %inline(%security_headers);
     
     location in ["/api", "/graphql"] {
       proxy_pass http://backend;
@@ -210,7 +210,7 @@ http {
   describe('Error handling', () => {
     it('should throw when inline variable is not defined', () => {
       const input = `server {
-  %inline %undefined_var
+  %inline(%undefined_var);
 }`;
       const ast = parse(input);
       

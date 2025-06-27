@@ -149,7 +149,7 @@ describe('Parser', () => {
     it('should parse inline directive', () => {
       const input = `
         server {
-          %inline %common_headers
+          %inline(%common_headers);
           listen 80;
         }
       `;
@@ -173,7 +173,7 @@ describe('Parser', () => {
           server {
             listen 80;
             
-            %inline %security_headers
+            %inline(%security_headers);
             
             location in ["/api", "/graphql"] {
               proxy_pass http://backend;

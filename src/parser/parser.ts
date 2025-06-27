@@ -124,11 +124,23 @@ export class Parser {
     const startPos = this.getCurrentPosition();
     this.advance(); // consume %inline
 
+    if (!this.consume(TokenType.LeftParen, 'Expected ( after %inline')) {
+      throw this.error('Expected ( after %inline');
+    }
+
     if (!this.check(TokenType.Variable)) {
-      throw this.error('Expected variable after %inline');
+      throw this.error('Expected variable inside %inline()');
     }
 
     const variable = this.advance();
+
+    if (!this.consume(TokenType.RightParen, 'Expected ) after variable')) {
+      throw this.error('Expected ) after variable');
+    }
+
+    if (!this.consume(TokenType.Semicolon, 'Expected ; after %inline()')) {
+      throw this.error('Expected ; after %inline()');
+    }
 
     return {
       type: 'inline',

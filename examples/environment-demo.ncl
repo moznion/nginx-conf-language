@@ -14,7 +14,7 @@ server {
   # Environment variable with default
   access_log %env("ACCESS_LOG", "/var/log/nginx/access.log");
   
-  %inline %common_headers
+  %inline(%common_headers);
   
   location / {
     root %env("DOCUMENT_ROOT", "/var/www/html");

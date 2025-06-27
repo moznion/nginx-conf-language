@@ -112,13 +112,16 @@ describe('Tokenizer', () => {
     });
 
     it('should tokenize inline directive', () => {
-      const input = '%inline %common_headers';
+      const input = '%inline(%common_headers);';
       const tokens = tokenize(input);
 
       expect(tokens).toEqual([
         { type: TokenType.Inline, value: '%inline', line: 1, column: 1 },
+        { type: TokenType.LeftParen, value: '(', line: 1, column: 8 },
         { type: TokenType.Variable, value: '%common_headers', line: 1, column: 9 },
-        { type: TokenType.EOF, value: '', line: 1, column: 24 }
+        { type: TokenType.RightParen, value: ')', line: 1, column: 24 },
+        { type: TokenType.Semicolon, value: ';', line: 1, column: 25 },
+        { type: TokenType.EOF, value: '', line: 1, column: 26 }
       ]);
     });
   });
