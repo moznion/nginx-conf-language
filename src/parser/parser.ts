@@ -13,6 +13,7 @@ import {
   VariableAssignmentNode,
   InlineDirectiveNode,
   EnvironmentVariableNode,
+  ImportNode,
   Position
 } from './ast';
 
@@ -66,6 +67,11 @@ export class Parser {
     // %env() directive
     if (this.check(TokenType.EnvVar)) {
       return this.parseEnvironmentVariable();
+    }
+
+    // %import() directive
+    if (this.check(TokenType.Import)) {
+      return this.parseImport();
     }
 
     // Location block
@@ -477,6 +483,41 @@ export class Parser {
       type: 'env_var',
       variableName,
       defaultValue,
+      position: startPos
+    };
+  }
+
+  private parseImport(): ImportNode {
+    const startPos = this.getCurrentPosition();
+    
+    // Consume %import
+    this.advance();
+    
+    // Consume (
+    if (!this.consume(TokenType.LeftParen, 'Expected ( after %import')) {
+      throw this.error('Expected ( after %import');
+    }
+    
+    // Read the import path (should be a string)
+    if (!this.check(TokenType.String)) {
+      throw this.error('Expected string literal for import path');
+    }
+    
+    const path = this.advance().value;
+    
+    // Consume )
+    if (!this.consume(TokenType.RightParen, 'Expected ) after import path')) {
+      throw this.error('Expected ) after import path');
+    }
+    
+    // Consume ;
+    if (!this.consume(TokenType.Semicolon, 'Expected ; after import directive')) {
+      throw this.error('Expected ; after import directive');
+    }
+    
+    return {
+      type: 'import',
+      path,
       position: startPos
     };
   }

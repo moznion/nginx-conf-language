@@ -11,8 +11,13 @@ import {
   LocationModifier,
   VariableAssignmentNode,
   InlineDirectiveNode,
-  EnvironmentVariableNode
+  EnvironmentVariableNode,
+  ImportNode
 } from '../parser/ast';
+import { Parser } from '../parser/parser';
+import { tokenize } from '../parser/tokenizer';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface GeneratorOptions {
   indent?: string;
@@ -23,6 +28,9 @@ export class Generator {
   private options: Required<GeneratorOptions>;
   private indentLevel: number = 0;
   private variables: Map<string, BlockNode> = new Map();
+  private importStack: string[] = [];
+  private processedFiles: Map<string, ConfigNode> = new Map();
+  private currentFile: string = '';
 
   constructor(options: GeneratorOptions = {}) {
     this.options = {
@@ -31,7 +39,9 @@ export class Generator {
     };
   }
 
-  generate(ast: ConfigNode): string {
+  generate(ast: ConfigNode, filePath: string = ''): string {
+    this.currentFile = filePath;
+    
     // First pass: collect all variable definitions
     this.collectVariables(ast);
     
@@ -67,6 +77,8 @@ export class Generator {
         return this.generateInline(node as InlineDirectiveNode);
       case 'env_var':
         return this.generateEnvironmentVariable(node as EnvironmentVariableNode);
+      case 'import':
+        return this.generateImport(node as ImportNode);
       default:
         throw new Error(`Unknown node type: ${(node as any).type}`);
     }
@@ -230,9 +242,78 @@ export class Generator {
     
     return value;
   }
+
+  private generateImport(node: ImportNode): string {
+    const importPath = this.resolveImportPath(node.path);
+    
+    // Check for circular dependency
+    if (this.importStack.includes(importPath)) {
+      const cycle = [...this.importStack, importPath].join(' -> ');
+      throw new Error(`Circular dependency detected: ${cycle}`);
+    }
+    
+    // Check if file has already been processed
+    if (this.processedFiles.has(importPath)) {
+      const cachedAst = this.processedFiles.get(importPath)!;
+      return this.generateImportedContent(cachedAst, importPath);
+    }
+    
+    // Read and parse the imported file
+    if (!fs.existsSync(importPath)) {
+      throw new Error(`Import file not found: ${importPath}`);
+    }
+    
+    const content = fs.readFileSync(importPath, 'utf-8');
+    const tokens = tokenize(content);
+    const parser = new Parser(tokens);
+    const importedAst = parser.parse();
+    
+    // Cache the parsed AST
+    this.processedFiles.set(importPath, importedAst);
+    
+    return this.generateImportedContent(importedAst, importPath);
+  }
+  
+  private generateImportedContent(ast: ConfigNode, filePath: string): string {
+    // Push current file to import stack
+    this.importStack.push(filePath);
+    
+    try {
+      // Collect variables from imported file
+      this.collectVariables(ast);
+      
+      // Generate content from imported AST (excluding variable assignments)
+      const lines: string[] = [];
+      for (const child of ast.children) {
+        if (child.type !== 'variable_assignment') {
+          const generated = this.generateNode(child);
+          if (generated) {
+            lines.push(generated);
+          }
+        }
+      }
+      
+      return lines.join('\n');
+    } finally {
+      // Pop from import stack
+      this.importStack.pop();
+    }
+  }
+  
+  private resolveImportPath(importPath: string): string {
+    if (path.isAbsolute(importPath)) {
+      return importPath;
+    }
+    
+    if (this.currentFile) {
+      return path.resolve(path.dirname(this.currentFile), importPath);
+    }
+    
+    return path.resolve(importPath);
+  }
 }
 
-export function generate(ast: ConfigNode, options?: GeneratorOptions): string {
+export function generate(ast: ConfigNode, options?: GeneratorOptions, filePath?: string): string {
   const generator = new Generator(options);
-  return generator.generate(ast);
+  return generator.generate(ast, filePath || '');
 }

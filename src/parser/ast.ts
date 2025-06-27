@@ -93,6 +93,14 @@ export interface EnvironmentVariableNode extends BaseNode {
 }
 
 /**
+ * Import directive node (e.g., %import("/path/to/file.ncl"))
+ */
+export interface ImportNode extends BaseNode {
+  type: 'import';
+  path: string;
+}
+
+/**
  * Union type for all AST nodes
  */
 export type ASTNode = 
@@ -102,4 +110,5 @@ export type ASTNode =
   | LocationNode
   | VariableAssignmentNode
   | InlineDirectiveNode
-  | EnvironmentVariableNode;
+  | EnvironmentVariableNode
+  | ImportNode;

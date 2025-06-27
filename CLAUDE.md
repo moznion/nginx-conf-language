@@ -135,6 +135,23 @@ Both test suites ensure generated configs are syntactically correct for real ngi
 5. **%env("VAR_NAME", "default")**: Resolves environment variable with default value
 
 ## Recent Changes
+### 2025-06-27 - Added Import Functionality (%import)
+- **New %import syntax**: `%import("/path/to/file.ncl");` for modular configurations
+- **Features implemented**:
+  - Tokenizer support for %import token type
+  - Parser support for import directives with proper error handling
+  - Generator support for processing imports with inline content expansion
+  - **Circular dependency detection**: Prevents infinite import loops with clear error messages
+  - **File resolution**: Supports both relative and absolute import paths
+  - **Variable sharing**: Imported files can define variables accessible to importing files
+  - **Caching**: Parsed import files are cached to avoid reprocessing
+- **Testing**: Comprehensive test suite with 13 tests covering all import scenarios
+- **CLI integration**: Updated CLI to pass file paths for proper import resolution
+- **Documentation**: Updated README.md with import examples and created demo files
+- **Example files**: Created `imports-demo.ncl` and shared configuration modules
+- **Import syntax**: Requires parentheses and semicolon: `%import("path");`
+- All 92 + 13 = 105 tests passing (import tests + existing tests)
+
 ### 2025-06-27 - Updated %inline to Function-like Syntax
 - Changed `%inline %variable` syntax to function-like `%inline(%variable);` format
 - Updated tokenizer to recognize `%inline` followed by `(` as inline token

@@ -52,7 +52,7 @@ program
       const output = generate(ast, {
         expandInline: options.inline !== false,
         indent: options.indent || '  '
-      });
+      }, inputPath);
       
       // Validate if requested
       if (options.validate || options.validateOnly) {

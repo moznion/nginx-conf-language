@@ -26,7 +26,33 @@ Environment variables are resolved at generation time:
 PORT=3000 SERVER_NAME=example.com BACKEND_URL=http://api.internal ncl-gen config.ncl
 ```
 
-### 2. Multiple Location Paths
+### 2. Import Files
+Create modular, reusable configurations using `%import`:
+
+```ncl
+# shared/ssl-config.ncl
+%ssl_settings = {
+  ssl_protocols TLSv1.2 TLSv1.3;
+  ssl_session_cache shared:SSL:10m;
+};
+
+# main.ncl
+%import("./shared/ssl-config.ncl");
+
+server {
+  listen 443 ssl;
+  %inline(%ssl_settings);
+}
+```
+
+Features:
+- **Relative paths**: Import files relative to current file location
+- **Absolute paths**: Use absolute paths for system-wide configurations
+- **Circular dependency detection**: Prevents infinite import loops
+- **Variable sharing**: Imported files can define variables for use in importing files
+- **Content inlining**: Imported content is expanded inline at generation time
+
+### 3. Multiple Location Paths
 Define multiple location blocks with a single statement using `location in`:
 
 ```ncl
@@ -48,7 +74,7 @@ location /v2 {
 }
 ```
 
-### 3. Code Block Variables
+### 4. Code Block Variables
 Define reusable code blocks with variables:
 
 ```ncl
@@ -58,7 +84,7 @@ Define reusable code blocks with variables:
 };
 ```
 
-### 4. Inline Expansion
+### 5. Inline Expansion
 Use `%inline` to expand code blocks:
 
 ```ncl
